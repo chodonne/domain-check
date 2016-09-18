@@ -4,11 +4,19 @@
 #
 # Author: Matty < matty91 at gmail dot com >
 #
-# Current Version: 2.1
+# Current Version (of this fork): 2.2
 #
 # Revision History:
+#
+#  Version 2.2
+#   Chris O'Donnell (chodonne at gmail dot com)
+#     Cleaned up white space and tabs
+#     Added option for /etc/domain-check.conf and ~/.domain-check.conf to override defaults
+#     Changed default email from sysadmin@mydomain.com to sysadmin@example.com
+#
 #  Version 2.1
 #   Bug fix for .com, .net, .us, .org -- Ryan Collins
+#
 #  Version 2.0
 #   Bug fix for .org, .biz, info, and .ca -- Cameron and Jim
 #
@@ -110,7 +118,7 @@
 PATH=/bin:/usr/bin:/usr/local/bin:/usr/local/ssl/bin:/usr/sfw/bin ; export PATH
 
 # Who to page when an expired domain is detected (cmdline: -e)
-ADMIN="sysadmin@mydomain.com"
+ADMIN="sysadmin@example.com"
 
 # Number of days in the warning threshhold  (cmdline: -x)
 WARNDAYS=30
@@ -132,6 +140,20 @@ CUT="/usr/bin/cut"
 MAIL="/bin/mail"
 # Place to stash temporary files
 WHOIS_TMP="/var/tmp/whois.$$"
+
+# Default conf file locations
+
+if [ -f /etc/domain-check.conf ]; then
+    . /etc/domain-check.conf
+fi
+
+if [ -f ./domain-check.conf ]; then
+    . ./domain-check.conf
+fi
+
+if [ -f ~/.domain-check.conf ]; then
+    . ~/.domain-check.conf
+fi
 
 #############################################################################
 # Purpose: Convert a date from MONTH-DAY-YEAR to Julian format
