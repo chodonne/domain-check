@@ -4,9 +4,11 @@
 #
 # Author: Matty < matty91 at gmail dot com >
 # 
-# Current Version: 2.0
+# Current Version: 2.1
 #
 # Revision History:
+#  Version 2.1
+#   Bug fix for .com, .net, .us, .org -- Ryan Collins
 #  Version 2.0
 #   Bug fix for .org, .biz, info, and .ca -- Cameron and Jim 
 #
@@ -231,7 +233,6 @@ check_domain_status()
     then
 	    TLDTYPE="`echo ${DOMAIN} | cut -d '.' -f2 | tr '[A-Z]' '[a-z]'`" 
     fi
-
     # Invoke whois to find the domain registrar and expiration date
     #${WHOIS} -h ${WHOIS_SERVER} "=${1}" > ${WHOIS_TMP}
     # Let whois select server 
@@ -267,7 +268,7 @@ check_domain_status()
     fi
 
     # Parse out the expiration date and registrar -- uses the last registrar it finds
-    REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} -F: '/Registrar/ && $2 != ""  { REGISTRAR=substr($2,2,17) } END { print REGISTRAR }'`
+    REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} -F: '/Registrar:/ && $2 != ""  { REGISTRAR=substr($2,2,17) } END { print REGISTRAR }'`
 
     if [ "${TLDTYPE}" == "uk" ]; # for .uk domain
     then
@@ -277,7 +278,7 @@ check_domain_status()
         REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} '/Registrant/ && $2 != ""  { REGISTRAR=substr($2,1,17) } END { print REGISTRAR }'`
     elif [ "${TLDTYPE}" == "org" ];
     then
-        REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} '/Registrar:/ && $2 != ""  { REGISTRAR=substr($2,11,17) } END { print REGISTRAR }'`
+        REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} -F: '/Sponsoring Registrar:/ && $2 != ""  { REGISTRAR=substr($2,2,17) } END { print REGISTRAR }'`
     elif [ "${TLDTYPE}" == "info" ];
     then
         REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} '/Registrar:/ && $2 != ""  { REGISTRAR=substr($2,11,17) } END { print REGISTRAR }'`
@@ -287,6 +288,9 @@ check_domain_status()
     elif [ "${TLDTYPE}" == "ca" ];
     then
 	REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} -F: '/Registrar:/ && $0 != ""  { getline; REGISTRAR=substr($0,24,17) } END { print REGISTRAR }'`
+    elif [ "${TLDTYPE}" == "us" ];
+    then
+	REGISTRAR=`cat ${WHOIS_TMP} | ${AWK} -F: '/Sponsoring Registrar:/ && $2 != ""  { REGISTRAR=substr($2,25,17) } END { print REGISTRAR }'`
     fi
 
     # If the Registrar is NULL, then we didn't get any data
@@ -324,6 +328,12 @@ check_domain_status()
     elif [ "${TLDTYPE}" == "biz" ]; # for .biz domain
     then
             DOMAINDATE=`cat ${WHOIS_TMP} | awk '/Domain Expiration Date:/ { print $6"-"$5"-"$9 }'`
+    elif [ "${TLDTYPE}" == "us" ]; # for .us domain
+    then
+            DOMAINDATE=`cat ${WHOIS_TMP} | awk '/Domain Expiration Date:/ { print $6"-"$5"-"$9 }'`
+    elif [ "${TLDTYPE}" == "me" ]; # for .me domain
+    then
+            DOMAINDATE=`cat ${WHOIS_TMP} | awk '/Domain Expiration Date:/ { print $3 }' | cut -d ":" -f 2`
     elif [ "${TLDTYPE}" == "uk" ]; # for .uk domain
     then
             DOMAINDATE=`cat ${WHOIS_TMP} | awk '/Renewal date:/ || /Expiry date:/ { print $3 }'`
@@ -534,3 +544,4 @@ rm -f ${WHOIS_TMP}
 
 ### Exit with a success indicator
 exit 0
+
